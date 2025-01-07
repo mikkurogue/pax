@@ -2,12 +2,7 @@ const std = @import("std");
 const Tuple = std.meta.Tuple;
 const StrEql = std.mem.eql;
 
-pub const SupportedCommands = enum {
-    install,
-    remove,
-    list,
-    // link - this is for p2 in roadmap.
-};
+pub const SupportedCommands = enum { install, remove, list, link };
 
 pub const CliError = error{ UnsupportedCommand, MissingArgumentPackageName };
 
