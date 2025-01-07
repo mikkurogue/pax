@@ -9,10 +9,7 @@ pub const SupportedCommands = enum {
     // link - this is for p2 in roadmap.
 };
 
-pub const CliError = error{
-    UnsupportedCommand,
-    MissingArgumentpackageue,
-};
+pub const CliError = error{ UnsupportedCommand, MissingArgumentPackageName };
 
 pub const Cli = struct {
     /// Run commands like
@@ -21,7 +18,7 @@ pub const Cli = struct {
     pub fn run(cmd: []const u8, package: ?[]const u8) !void {
         // TODO: Rework this into a switch to switch on the supported commands
         if (package == null) {
-            std.log.debug("package is null, meaning singular commands only like list!", .{});
+            return CliError.MissingArgumentPackageName;
         } else if (StrEql(u8, cmd, "install")) {
             try install(package.?);
             std.log.debug("Found command: {s} with value {s}", .{ cmd, package.? });
