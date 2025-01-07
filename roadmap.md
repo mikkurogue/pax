@@ -2,7 +2,7 @@
 
 ## Phase 1, basic core functionality.
 
-[x] Basic CLI that accepts commands (just print something per command for now)
+[ ] Basic CLI that accepts commands (just print something per command for now)
 
 [ ] Create a folder to store packages in i.e. ~/.zigpkg/ - this should be initialised only if the folder does not exist already
 
