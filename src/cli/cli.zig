@@ -2,7 +2,7 @@ const std = @import("std");
 const Tuple = std.meta.Tuple;
 const StrEql = std.mem.eql;
 const stdout = std.io.getStdOut().writer();
-pub const SupportedCommands = enum { install, remove, list, link };
+pub const SupportedCommands = enum { install, remove, list, link, help };
 
 pub const CliError = error{ UnsupportedCommand, MissingArgumentPackageName };
 
