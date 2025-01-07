@@ -1,7 +1,7 @@
 const std = @import("std");
 const Tuple = std.meta.Tuple;
 const StrEql = std.mem.eql;
-
+const stdout = std.io.getStdOut().writer();
 pub const SupportedCommands = enum { install, remove, list, link };
 
 pub const CliError = error{ UnsupportedCommand, MissingArgumentPackageName };
@@ -30,6 +30,8 @@ pub const Cli = struct {
     pub fn run_single(cmd: []const u8) !void {
         if (StrEql(u8, cmd, "list")) {
             try list();
+        } else if (StrEql(u8, cmd, "help")) {
+            try print_help();
         }
     }
 };
@@ -52,4 +54,8 @@ fn link(package: []const u8) !void {
 /// list all insatlled packages on the system - these will be in ~/.zigpkg/packages/
 fn list() !void {
     std.log.debug("list installed system packages", .{});
+}
+
+fn print_help() !void {
+    try stdout.print("List of commands that are supported here pls", .{});
 }
