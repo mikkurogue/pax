@@ -1,9 +1,10 @@
 # Roadmap
 
 ## Phase 1, basic core functionality.
+### Potentially recruit/find people to include in this phase?
 
-[ ] Basic CLI that accepts commands (just print something per command for now) - Needs to support windows (sadly)
-[ ] Each "run" of the CLI can only fire 1 command at a time. So `zigpkg install PACKAGENAME list` wont work, only `zigpkg install PACKAGENAME` and then afterwards `zigpkg list`. This is to simplify the argument parsing and the UX overhead 
+[x] Basic CLI that accepts commands (just print something per command for now) - Needs to support windows (sadly)
+[] Each "run" of the CLI can only fire 1 command at a time. So `zigpkg install PACKAGENAME list` wont work, only `zigpkg install PACKAGENAME` and then afterwards `zigpkg list`. This is to simplify the argument parsing and the UX overhead 
 
 [ ] Create a folder to store packages in i.e. ~/.zigpkg/ - this should be initialised only if the folder does not exist already
 
@@ -14,7 +15,7 @@
 [ ] Add the `list` command to list the installed packages and their versions.
 
 
-## Phase 2, go open source and try to create the ecosystem
+## Phase 2, go open source 
 
 [ ] Package index - A simple (for now) registry and collection of links for packages, with metadata.
 
