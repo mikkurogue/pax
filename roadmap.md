@@ -1,8 +1,7 @@
 # Roadmap
 
-Phase 1, basic core functionality.
+## Phase 1, basic core functionality.
 
-### Initial tool
 [ ] Basic CLI that accepts commands (just print something per command for now)
 
 [ ] Create a folder to store packages in i.e. ~/.zigpkg/ - this should be initialised only if the folder does not exist already
@@ -14,7 +13,7 @@ Phase 1, basic core functionality.
 [ ] Add the `list` command to list the installed packages and their versions.
 
 
-Phase 2, go open source and try to create the ecosystem
+## Phase 2, go open source and try to create the ecosystem
 
 [ ] Package index - A simple (for now) registry and collection of links for packages, with metadata.
 
