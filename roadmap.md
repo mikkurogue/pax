@@ -15,7 +15,7 @@
 [ ] Add the `list` command to list the installed packages and their versions.
 
 
-## Phase 2, go open source 
+## Phase 2, 
 
 [ ] Package index - A simple (for now) registry and collection of links for packages, with metadata.
 
