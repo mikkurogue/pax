@@ -24,13 +24,21 @@ pub const Cli = struct {
             std.log.debug("package is null, meaning singular commands only like list!", .{});
         } else if (StrEql(u8, cmd, "install")) {
             try install(package.?);
+            std.log.debug("Found command: {s} with value {s}", .{ cmd, package.? });
         } else if (StrEql(u8, cmd, "remove")) {
             try remove(package.?);
+            std.log.debug("Found command: {s} with value {s}", .{ cmd, package.? });
         } else if (StrEql(u8, cmd, "link")) {
             try link(package.?);
+            std.log.debug("Found command: {s} with value {s}", .{ cmd, package.? });
         }
+    }
 
-        std.log.debug("Found command: {s} with value {s}", .{ cmd, package.? });
+    /// run singluar commands only like list
+    pub fn run_single(cmd: []const u8) !void {
+        if (StrEql(u8, cmd, "list")) {
+            try list();
+        }
     }
 };
 
@@ -44,12 +52,12 @@ fn remove(package: []const u8) !void {
     std.log.debug("remove this package: {s}", .{package});
 }
 
-/// list all insatlled packages on the system - these will be in ~/.zigpkg/packages/
-fn list() !void {
-    std.log.debug("list installed system packages", .{});
-}
-
 /// Requires the cli to be navigated to a zig project. requires a build.zig.zon (and/or our own local packages.zig.zon)
 fn link(package: []const u8) !void {
     std.log.debug("link package to current project: {s}", .{package});
+}
+
+/// list all insatlled packages on the system - these will be in ~/.zigpkg/packages/
+fn list() !void {
+    std.log.debug("list installed system packages", .{});
 }

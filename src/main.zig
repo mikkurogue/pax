@@ -21,11 +21,8 @@ pub fn main() !void {
         process.exit(0);
     }
 
-    if (StrEql(u8, args[1], "install")) {
-        const val = if (args.len > 2) args[2] else null;
-        try Cli.run(args[1], val);
-    }
-
+    const val = if (args.len > 2) args[2] else null;
+    try Cli.run(args[1], val);
     // std.log.debug("there are {d} args: \n", .{args.len});
     //
     // for (args) |arg| {
