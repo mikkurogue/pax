@@ -2,7 +2,8 @@
 
 ## Phase 1, basic core functionality.
 
-[ ] Basic CLI that accepts commands (just print something per command for now)
+[ ] Basic CLI that accepts commands (just print something per command for now) - Needs to support windows (sadly)
+[ ] Each "run" of the CLI can only fire 1 command at a time. So `zigpkg install PACKAGENAME list` wont work, only `zigpkg install PACKAGENAME` and then afterwards `zigpkg list`. This is to simplify the argument parsing and the UX overhead 
 
 [ ] Create a folder to store packages in i.e. ~/.zigpkg/ - this should be initialised only if the folder does not exist already
 
