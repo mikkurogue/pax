@@ -6,7 +6,7 @@
 
 [ ] Create a folder to store packages in i.e. ~/.zigpkg/ - this should be initialised only if the folder does not exist already
 
-[ ] Create some configuration structure to track installed packages
+[ ] Use the [Zon](https://zon.dev/) to create the necessary configs. in ~/.zigpkg/packages.zon as the manifest that has the files. and in the project folder a packages.zon file to use to link packages to the build.zig.zon to make them available in the project. (later step)
 
 [ ] Create functions that are the core for the install and remove commands. `install <url>` should download and install the tarball or git repo (idk what yet). `remove <package>` should remove the package from the filesystem. Both commands need to manipulate the config file.
 
