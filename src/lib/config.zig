@@ -34,12 +34,26 @@ pub const Config = struct {
 
 /// FIXME: Need to somehow fix the concatenating of the strings for the directories here.
 /// Create an initial config in ~/.config/zigpkg/config.zig.zon
+///
+/// FIXME: Fix the buffer writer thing cause it doesnt work and im actually brainless
 pub fn create_initial_config() ConfigError!void {
     const home_dir = std.posix.getenv("HOME") orelse unreachable;
-    const config_dir_path = fs.path.join(std.heap.page_allocator, home_dir ++ ".config/zigpkg") catch return ConfigError.CanNotWrite;
-    defer std.heap.page_allocator.free(config_dir_path);
 
-    const config_file_path = fs.path.join(std.heap.page_allocator, config_dir_path ++ "config.zig.zon") catch return ConfigError.CanNotWrite;
+    var fbuffer: [64]u8 = undefined;
+    var dbuffer: [64]u8 = undefined;
+
+    // Copy home_dir and the constant string into the buffer
+    var config_file_buf = fbuffer.writer();
+    try config_file_buf.writeAll(home_dir);
+    try config_file_buf.writeAll(".config/zigpkg/config.zig.zon");
+
+    var config_dir_buf = dbuffer.writer();
+    try config_dir_buf.writeAll(home_dir);
+    try config_dir_buf.writeAll("./config/zigpkg/");
+
+    const config_dir_path = fs.path.join(std.heap.page_allocator, dbuffer[0..config_dir_buf.len]) catch return ConfigError.CanNotWrite;
+    defer std.heap.page_allocator.free(config_dir_path);
+    const config_file_path = try fs.path.join(std.heap.page_allocator, fbuffer[0..config_file_buf.len]);
     defer std.heap.page_allocator.free(config_file_path);
 
     var dir = try fs.cwd().openDir(".", .{});
@@ -67,10 +81,24 @@ pub fn create_initial_config() ConfigError!void {
 /// (upgrade package probably at a later point)
 pub fn write_to_config(package: []const u8, action: []const u8) ConfigError!void {
     _ = package;
-    const allocator = std.heap.page_allocator;
     const home_dir = std.posix.getenv("HOME") orelse unreachable;
-    const config_file_path = fs.path.join(std.heap.page_allocator, home_dir ++ ".config/zigpkg/config.zig.zon") catch return ConfigError.CanNotWrite;
-    defer allocator.free(config_file_path);
+
+    var fbuffer: [64]u8 = undefined;
+    var dbuffer: [64]u8 = undefined;
+
+    // Copy home_dir and the constant string into the buffer
+    var config_file_buf = fbuffer.writer();
+    try config_file_buf.writeAll(home_dir);
+    try config_file_buf.writeAll(".config/zigpkg/config.zig.zon");
+
+    var config_dir_buf = dbuffer.writer();
+    try config_dir_buf.writeAll(home_dir);
+    try config_dir_buf.writeAll("./config/zigpkg/");
+
+    const config_dir_path = fs.path.join(std.heap.page_allocator, dbuffer[0..config_dir_buf.len]) catch return ConfigError.CanNotWrite;
+    defer std.heap.page_allocator.free(config_dir_path);
+    const config_file_path = try fs.path.join(std.heap.page_allocator, fbuffer[0..config_file_buf.len]);
+    defer std.heap.page_allocator.free(config_file_path);
 
     const file = try fs.cwd().openFile(config_file_path, .{});
     defer file.close();
@@ -93,8 +121,8 @@ pub fn write_to_config(package: []const u8, action: []const u8) ConfigError!void
         // IMPL TODO
     }
 
-    const updated_zon = try config.toZon(allocator);
-    defer allocator(updated_zon);
+    const updated_zon = try config.toZon(std.heap.page_allocator);
+    defer std.heap.page_allocator(updated_zon);
 
     const write_file = try fs.cwd().createFile(config_file_path, .{});
     defer write_file.close();
@@ -106,8 +134,13 @@ pub fn write_to_config(package: []const u8, action: []const u8) ConfigError!void
 /// this has nothing to do with the registry yet
 pub fn read_from_config(package: []const u8) ConfigError!void {
     const allocator = std.heap.page_allocator;
-    const home_dir = std.posix.getenv("HOME") orelse unreachable;
-    const config_file_path = fs.path.join(std.heap.page_allocator, home_dir ++ ".config/zigpkg/config.zig.zon") catch return ConfigError.CanNotWrite;
+    var fbuffer: [64]u8 = undefined;
+    var config_file_buf = fbuffer.writer();
+    try config_file_buf.writeAll(".config/zigpkg/config.zig.zon");
+
+    const config_file_path = try fs.path.join(std.heap.page_allocator, fbuffer[0..config_file_buf.len]);
+    defer std.heap.page_allocator.free(config_file_path);
+
     defer allocator.free(config_file_path);
 
     const file = try fs.cwd().openFile(config_file_path, .{});
