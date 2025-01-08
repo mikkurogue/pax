@@ -43,7 +43,7 @@ pub const Config = struct {
 pub fn create_initial_config() ConfigError!void {
     const config_dir_path = fs.path.join(std.heap.page_allocator, "~/.config/zigpkg") catch return ConfigError.CanNotWrite;
     defer std.heap.page_allocator.free(config_dir_path);
-    const config_file_path = try fs.path.join(std.heap.page_allocator, "~/.config/zigpkg/config.zig.zon);
+    const config_file_path = try fs.path.join(std.heap.page_allocator, "~/.config/zigpkg/config.zig.zon");
     defer std.heap.page_allocator.free(config_file_path);
 
     var dir = try fs.cwd().openDir(".", .{});
@@ -112,7 +112,7 @@ pub fn write_to_config(package: []const u8, action: []const u8) ConfigError!void
 pub fn read_from_config(package: []const u8) ConfigError!void {
     const allocator = std.heap.page_allocator;
 
-    const config_file_path = try fs.path.join(allocator, "~/.config/zigpkg/config.zig.zon);
+    const config_file_path = try fs.path.join(allocator, "~/.config/zigpkg/config.zig.zon");
     defern allocator.free(config_file_path);
 
     const file = try fs.cwd().openFile(config_file_path, .{});
