@@ -32,16 +32,16 @@ pub const Config = struct {
         };
     }
 
-    pub fn toZon(self: *const Config, allocator: std.mem.Allocator) ![]const u8 {
+    pub fn toZon(allocator: std.mem.Allocator) ![]const u8 {
         var buffer = std.ArrayList(u8).init(allocator);
         defer buffer.deinit();
 
         try buffer.appendSlice(".{\n");
         try buffer.appendSlice("install_dir = \"");
-        try buffer.appendSlice(self.install_dir);
+        try buffer.appendSlice(install_dir);
         try buffer.appendSlice("\",\n");
         try buffer.appendSlice("cache_dir = \"");
-        try buffer.appendSlice(self.cache_dir);
+        try buffer.appendSlice(cache_dir);
         try buffer.appendSlice("}\n");
 
         return buffer.toOwnedSlice();
@@ -57,7 +57,7 @@ pub fn create_initial_config() !void {
     const allocator = gpa.allocator();
     defer _ = gpa.deinit();
 
-    // const config_dir = try fs.path.join(allocator, config_dir_path);
+    const config_dir = try fs.path.join(allocator, config_dir_path);
     const config_file = try fs.path.join(allocator, config_file_path);
 
     var dir = try fs.cwd().openDir(".", .{});
@@ -65,12 +65,12 @@ pub fn create_initial_config() !void {
     const dir_stat = dir.stat() catch |err| {
         std.log.warn("err: {}", .{err});
         // If the path does not exist, create the directory
-        try dir.makeDir(config_dir_path);
+        try dir.makeDir(config_dir);
         return;
     };
 
     // If `dir_stat` exists, check its type or permissions
-    if (dir_stat.kind != .Directory) {
+    if (dir_stat.kind != .directory) {
         return ConfigError.CanNotCreatePackagesDir;
     }
 
@@ -80,7 +80,7 @@ pub fn create_initial_config() !void {
     const config_zon = try Config.toZon(allocator);
     defer allocator.free(config_zon);
 
-    try config_file.write(config_zon);
+    // try config_file.write(config_zon);
 }
 
 /// Write to the config in ~/.config/zigpkg/config.zig.zon
