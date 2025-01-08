@@ -8,6 +8,12 @@ pub const ConfigError = error{ ConfigurataionAlreadyExists, CanNotRead, CanNotWr
 const install_dir = "~/.config/zigpkg/packages";
 const cache_dir = "~/.config/zigpkg/cache";
 
+const config_file_path = &[_][]const u8{
+    "~",
+    ".config",
+    "zigpkg",
+    "config.zig.zon",
+};
 // this is probably not necessary
 pub const Config = struct {
     install_dir: []const u8,
@@ -28,12 +34,16 @@ pub const Config = struct {
         defer buffer.deinit();
 
         try buffer.appendSlice(".{\n");
-        try buffer.appendSlice("install_dir = \"");
+
+        try buffer.appendSlice("    .install_dir = \"");
+
         try buffer.appendSlice(install_dir);
+
         try buffer.appendSlice("\",\n");
-        try buffer.appendSlice("\"cache_dir = \"\n");
+
+        try buffer.appendSlice("    .cache_dir = \"");
         try buffer.appendSlice(cache_dir);
-        try buffer.appendSlice("}\n\"");
+        try buffer.appendSlice("\"\n}\n");
 
         return buffer.toOwnedSlice();
     }
@@ -74,6 +84,7 @@ pub fn write_to_config(package: []const u8, action: []const u8) !void {
     var gpa = std.heap.GeneralPurposeAllocator(.{}){};
     const allocator = gpa.allocator();
     defer _ = gpa.deinit();
+
     const config_file = try fs.path.join(allocator, config_file_path);
     defer allocator.free(config_file);
 

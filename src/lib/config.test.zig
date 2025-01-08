@@ -14,6 +14,11 @@ test "create_initial_config creates default config file" {
         return;
     };
 }
+//
+// test "write_to_config handles install action" {
+//     try config.write_to_config("test-pkg", "install");
+// }
+
 // test "write_to_config handles install action" {
 //
 //     // Ensure initial config exists
