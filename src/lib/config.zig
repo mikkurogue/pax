@@ -25,14 +25,17 @@ pub const Config = struct {
     install_dir: []const u8,
     cache_dir: []const u8,
 
-    pub fn default() Config {
+    const Self = @This();
+
+    pub fn default() Self {
         return Config{
             .install_dir = "~/.config/zigpkg/packages",
             .cache_dir = "~/.config/zigpkg/cache",
         };
     }
 
-    pub fn toZon(allocator: std.mem.Allocator) ![]const u8 {
+    pub fn toZon(self: *Self, allocator: std.mem.Allocator) ![]const u8 {
+        _ = self;
         var buffer = std.ArrayList(u8).init(allocator);
         defer buffer.deinit();
 
@@ -77,7 +80,9 @@ pub fn create_initial_config() !void {
     var cfg_file = try fs.cwd().createFile(config_file, .{});
     defer cfg_file.close();
 
-    const config_zon = try Config.toZon(allocator);
+    var cfg = Config.default();
+
+    const config_zon = try cfg.toZon(allocator);
     defer allocator.free(config_zon);
 
     // try config_file.write(config_zon);
@@ -122,7 +127,8 @@ pub fn write_to_config(package: []const u8, action: []const u8) !void {
     const write_file = try fs.cwd().createFile(config_file, .{});
     defer write_file.close();
 
-    try write_file.write(updated_zon);
+    const size = try write_file.write(updated_zon);
+    std.log.debug("Size: {d}", .{size});
 }
 
 /// Read from the config to be able to find an installed package on the system
