@@ -52,20 +52,25 @@ pub const Config = struct {
 /// Create an initial config in ~/.config/zigpkg/config.zig.zon
 ///
 /// FIXME: Fix the buffer writer thing cause it doesnt work and im actually brainless
-pub fn create_initial_config() ConfigError!void {
+pub fn create_initial_config() !void {
     var gpa = std.heap.GeneralPurposeAllocator(.{}){};
     const allocator = gpa.allocator();
     defer _ = gpa.deinit();
 
-    const config_dir = try fs.path.join(allocator, config_dir_path);
+    // const config_dir = try fs.path.join(allocator, config_dir_path);
     const config_file = try fs.path.join(allocator, config_file_path);
 
     var dir = try fs.cwd().openDir(".", .{});
-    const dir_stat = dir.stat(config_dir);
 
-    if (dir_stat catch error.PathNotFound) {
-        try dir.makeDir(config_dir_path, 0o755);
-    } else if (dir_stat catch |e| e != error.None) {
+    const dir_stat = dir.stat() catch |err| {
+        std.log.warn("err: {}", .{err});
+        // If the path does not exist, create the directory
+        try dir.makeDir(config_dir_path);
+        return;
+    };
+
+    // If `dir_stat` exists, check its type or permissions
+    if (dir_stat.kind != .Directory) {
         return ConfigError.CanNotCreatePackagesDir;
     }
 
@@ -82,7 +87,7 @@ pub fn create_initial_config() ConfigError!void {
 /// This should be like writing a newly installed package
 /// or removing a package
 /// (upgrade package probably at a later point)
-pub fn write_to_config(package: []const u8, action: []const u8) ConfigError!void {
+pub fn write_to_config(package: []const u8, action: []const u8) !void {
     _ = package;
     var gpa = std.heap.GeneralPurposeAllocator(.{}){};
     const allocator = gpa.allocator();
@@ -122,7 +127,7 @@ pub fn write_to_config(package: []const u8, action: []const u8) ConfigError!void
 
 /// Read from the config to be able to find an installed package on the system
 /// this has nothing to do with the registry yet
-pub fn read_from_config(package: []const u8) ConfigError!void {
+pub fn read_from_config(package: []const u8) !void {
     var gpa = std.heap.GeneralPurposeAllocator(.{}){};
     const allocator = gpa.allocator();
     defer _ = gpa.deinit();
