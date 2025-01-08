@@ -62,6 +62,8 @@ pub fn create_initial_config() !void {
 
     const config_dir = try fs.path.join(allocator, config_dir_path);
     const config_file = try fs.path.join(allocator, config_file_path);
+    defer allocator.free(config_file);
+    defer allocator.free(config_dir);
 
     var dir = try fs.cwd().openDir(".", .{});
 
