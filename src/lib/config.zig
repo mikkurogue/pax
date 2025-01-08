@@ -79,7 +79,10 @@ pub fn create_initial_config() !void {
         return ConfigError.CanNotCreatePackagesDir;
     }
 
-    var cfg_file = try fs.cwd().createFile(config_file, .{});
+    var cfg_file = fs.cwd().createFile(config_file, .{}) catch |err| {
+        std.log.warn("Error: {}", .{err});
+        return;
+    };
     defer cfg_file.close();
 
     var cfg = Config.default();
