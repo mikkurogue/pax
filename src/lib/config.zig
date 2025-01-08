@@ -24,10 +24,27 @@ pub const Config = struct {
 
     packages: []const u8,
 
+    /// Try to use this in reference to the struct when in it.
+    /// Should clear up confusion when also using other structs inside
+    /// the struct at some point.
     const Self = @This();
 
+    pub fn init(self: *Self, idir: []const u8, cdir: []const u8, p: []const u8) !Self {
+        _ = self;
+        return .Self{
+            .install_dir = idir,
+            .cache_dir = cdir,
+            .packages = p,
+        };
+    }
+
+    /// Only use this to test stuff.
+    /// if we want to initialise a new config struct and populate it,
+    /// use the init func.
+    /// possible allow for allocation?
+    /// have to see if its necessary to allocate while running the cli
     pub fn default() Self {
-        return Config{
+        return Self{
             .install_dir = install_dir,
             .cache_dir = cache_dir,
             .packages = "Test package",
