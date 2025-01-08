@@ -14,36 +14,46 @@ const config_file_path = &[_][]const u8{
     "zigpkg",
     "config.zig.zon",
 };
+
+const PackageItem = struct { package_name: []const u8, package_version: []const u8, package_url: []const u8 };
+
 // this is probably not necessary
 pub const Config = struct {
     install_dir: []const u8,
     cache_dir: []const u8,
 
+    packages: []const u8,
+
     const Self = @This();
 
     pub fn default() Self {
         return Config{
-            .install_dir = "~/.config/zigpkg/packages",
-            .cache_dir = "~/.config/zigpkg/cache",
+            .install_dir = install_dir,
+            .cache_dir = cache_dir,
+            .packages = "Test package",
         };
     }
 
     pub fn toZon(self: *Self, allocator: std.mem.Allocator) ![]const u8 {
-        _ = self;
+        // _ = self;
         var buffer = std.ArrayList(u8).init(allocator);
         defer buffer.deinit();
 
         try buffer.appendSlice(".{\n");
 
-        try buffer.appendSlice("    .install_dir = \"");
-
-        try buffer.appendSlice(install_dir);
-
+        try buffer.appendSlice("    .install_dir = \"" ++ "\"");
+        try buffer.appendSlice(self.install_dir);
         try buffer.appendSlice("\",\n");
 
         try buffer.appendSlice("    .cache_dir = \"");
-        try buffer.appendSlice(cache_dir);
-        try buffer.appendSlice("\"\n}\n");
+        try buffer.appendSlice(self.cache_dir);
+        try buffer.appendSlice("\",\n");
+
+        try buffer.appendSlice("    .packages = \"");
+        try buffer.appendSlice(self.packages);
+        try buffer.appendSlice("\",\n");
+
+        try buffer.appendSlice("}\n");
 
         return buffer.toOwnedSlice();
     }
