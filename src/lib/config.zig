@@ -2,11 +2,23 @@ const std = @import("std");
 const fs = std.fs;
 const Tuple = std.meta.Tuple;
 const StrEql = std.mem.eql;
+const Allocator = std.mem.Allocator;
 
 pub const ConfigError = error{ ConfigurataionAlreadyExists, CanNotRead, CanNotWrite, CanNotCreatePackagesDir };
 const install_dir = "~/.config/zigpkg/packages";
 const cache_dir = "~/.config/zigpkg/cache";
 
+const config_file_path = &[_][]const u8{
+    "~",
+    ".config",
+    "zigpkg",
+    "config.zig.zon",
+};
+const config_dir_path = &[_][]const u8{
+    "~",
+    ".config",
+    "zigpkg",
+};
 
 // this is probably not necessary
 pub const Config = struct {
@@ -41,13 +53,15 @@ pub const Config = struct {
 ///
 /// FIXME: Fix the buffer writer thing cause it doesnt work and im actually brainless
 pub fn create_initial_config() ConfigError!void {
-    const config_dir_path = fs.path.join(std.heap.page_allocator, "~/.config/zigpkg") catch return ConfigError.CanNotWrite;
-    defer std.heap.page_allocator.free(config_dir_path);
-    const config_file_path = try fs.path.join(std.heap.page_allocator, "~/.config/zigpkg/config.zig.zon");
-    defer std.heap.page_allocator.free(config_file_path);
+    var gpa = std.heap.GeneralPurposeAllocator(.{}){};
+    const allocator = gpa.allocator();
+    defer _ = gpa.deinit();
+
+    const config_dir = try fs.path.join(allocator, config_dir_path);
+    const config_file = try fs.path.join(allocator, config_file_path);
 
     var dir = try fs.cwd().openDir(".", .{});
-    const dir_stat = dir.stat(config_dir_path);
+    const dir_stat = dir.stat(config_dir);
 
     if (dir_stat catch error.PathNotFound) {
         try dir.makeDir(config_dir_path, 0o755);
@@ -55,9 +69,8 @@ pub fn create_initial_config() ConfigError!void {
         return ConfigError.CanNotCreatePackagesDir;
     }
 
-    const allocator = std.heap.page_allocator;
-    var config_file = try fs.cwd().createFile(config_file_path, .{});
-    defer config_file.close();
+    var cfg_file = try fs.cwd().createFile(config_file, .{});
+    defer cfg_file.close();
 
     const config_zon = try Config.toZon(allocator);
     defer allocator.free(config_zon);
@@ -71,13 +84,13 @@ pub fn create_initial_config() ConfigError!void {
 /// (upgrade package probably at a later point)
 pub fn write_to_config(package: []const u8, action: []const u8) ConfigError!void {
     _ = package;
-   
-    const config_dir_path = fs.path.join(std.heap.page_allocator, "~/.config/zigpkg") catch return ConfigError.CanNotWrite;
-    defer std.heap.page_allocator.free(config_dir_path);
-    const config_file_path = try fs.path.join(std.heap.page_allocator, "~/.config/zigpkg/config.zig.zon");
-    defer std.heap.page_allocator.free(config_file_path);
+    var gpa = std.heap.GeneralPurposeAllocator(.{}){};
+    const allocator = gpa.allocator();
+    defer _ = gpa.deinit();
+    const config_file = try fs.path.join(allocator, config_file_path);
+    defer allocator.free(config_file);
 
-    const file = try fs.cwd().openFile(config_file_path, .{});
+    const file = try fs.cwd().openFile(config_file, .{});
     defer file.close();
 
     var buffer: [4096]u8 = undefined;
@@ -98,10 +111,10 @@ pub fn write_to_config(package: []const u8, action: []const u8) ConfigError!void
         // IMPL TODO
     }
 
-    const updated_zon = try config.toZon(std.heap.page_allocator);
-    defer std.heap.page_allocator(updated_zon);
+    const updated_zon = try config.toZon(allocator);
+    defer allocator.free(updated_zon);
 
-    const write_file = try fs.cwd().createFile(config_file_path, .{});
+    const write_file = try fs.cwd().createFile(config_file, .{});
     defer write_file.close();
 
     try write_file.write(updated_zon);
@@ -110,12 +123,14 @@ pub fn write_to_config(package: []const u8, action: []const u8) ConfigError!void
 /// Read from the config to be able to find an installed package on the system
 /// this has nothing to do with the registry yet
 pub fn read_from_config(package: []const u8) ConfigError!void {
-    const allocator = std.heap.page_allocator;
+    var gpa = std.heap.GeneralPurposeAllocator(.{}){};
+    const allocator = gpa.allocator();
+    defer _ = gpa.deinit();
 
-    const config_file_path = try fs.path.join(allocator, "~/.config/zigpkg/config.zig.zon");
-    defern allocator.free(config_file_path);
+    const config_file = try fs.path.join(allocator, config_file_path);
+    defer allocator.free(config_file);
 
-    const file = try fs.cwd().openFile(config_file_path, .{});
+    const file = try fs.cwd().openFile(config_file, .{});
     defer file.close();
 
     var buffer: [4096]u8 = undefined;
