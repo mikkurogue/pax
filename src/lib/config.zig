@@ -8,18 +8,6 @@ pub const ConfigError = error{ ConfigurataionAlreadyExists, CanNotRead, CanNotWr
 const install_dir = "~/.config/zigpkg/packages";
 const cache_dir = "~/.config/zigpkg/cache";
 
-const config_file_path = &[_][]const u8{
-    "~",
-    ".config",
-    "zigpkg",
-    "config.zig.zon",
-};
-const config_dir_path = &[_][]const u8{
-    "~",
-    ".config",
-    "zigpkg",
-};
-
 // this is probably not necessary
 pub const Config = struct {
     install_dir: []const u8,
