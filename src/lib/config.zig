@@ -43,54 +43,38 @@ pub const Config = struct {
         try buffer.appendSlice("install_dir = \"");
         try buffer.appendSlice(install_dir);
         try buffer.appendSlice("\",\n");
-        try buffer.appendSlice("cache_dir = \"");
+        try buffer.appendSlice("\"cache_dir = \"\n");
         try buffer.appendSlice(cache_dir);
-        try buffer.appendSlice("}\n");
+        try buffer.appendSlice("}\n\"");
 
         return buffer.toOwnedSlice();
     }
 };
 
-/// FIXME: Need to somehow fix the concatenating of the strings for the directories here.
-/// Create an initial config in ~/.config/zigpkg/config.zig.zon
-///
-/// FIXME: Fix the buffer writer thing cause it doesnt work and im actually brainless
 pub fn create_initial_config() !void {
     var gpa = std.heap.GeneralPurposeAllocator(.{}){};
     const allocator = gpa.allocator();
     defer _ = gpa.deinit();
 
-    const config_dir = try fs.path.join(allocator, config_dir_path);
-    const config_file = try fs.path.join(allocator, config_file_path);
-    defer allocator.free(config_file);
-    defer allocator.free(config_dir);
+    // Resolve `~` to the home directory
+    const home_opt = std.posix.getenv("HOME") orelse unreachable;
+    const home: []const u8 = home_opt;
+    const cfg_dir = try fs.path.join(allocator, &.{ home, ".config", "zigpkg" });
+    const cfg_file_dir = try fs.path.join(allocator, &.{ home, ".config", "zigpkg", "config.zig.zon" });
+    defer allocator.free(cfg_dir);
+    defer allocator.free(cfg_file_dir);
 
-    var dir = try fs.cwd().openDir(".", .{});
-
-    const dir_stat = dir.stat() catch |err| {
-        std.log.warn("err: {}", .{err});
-        // If the path does not exist, create the directory
-        try dir.makeDir(config_dir);
-        return;
+    var file = fs.cwd().createFile(cfg_file_dir, .{}) catch |err| switch (err) {
+        // todo add the create file here if it doesnt exist
+        error.PathAlreadyExists => return,
+        else => return err,
     };
-
-    // If `dir_stat` exists, check its type or permissions
-    if (dir_stat.kind != .directory) {
-        return ConfigError.CanNotCreatePackagesDir;
-    }
-
-    var cfg_file = fs.cwd().createFile(config_file, .{}) catch |err| {
-        std.log.warn("Error: {}", .{err});
-        return;
-    };
-    defer cfg_file.close();
+    defer file.close();
 
     var cfg = Config.default();
-
     const config_zon = try cfg.toZon(allocator);
     defer allocator.free(config_zon);
-
-    // try config_file.write(config_zon);
+    try file.writeAll(config_zon);
 }
 
 /// Write to the config in ~/.config/zigpkg/config.zig.zon

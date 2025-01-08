@@ -10,12 +10,10 @@ const fs = std.fs;
 
 test "create_initial_config creates default config file" {
     config.create_initial_config() catch |err| {
-        if (err == error.FileNotFound) {
-            std.log.warn("File can not be found. Unsure where this happens", .{});
-        }
+        std.log.warn("Error during config creation: {}", .{err});
+        return;
     };
 }
-
 // test "write_to_config handles install action" {
 //
 //     // Ensure initial config exists
