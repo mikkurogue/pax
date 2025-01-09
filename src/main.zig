@@ -5,9 +5,6 @@ const Cli = @import("cli/cli.zig").Cli;
 
 const StrEql = std.mem.eql;
 
-const CliError = @import("cli/cli.zig").CliError;
-const SupportedCommands = @import("cli/cli.zig").SupportedCommands;
-
 pub fn main() !void {
     var gpa = std.heap.GeneralPurposeAllocator(.{}){};
     const allocator = gpa.allocator();
@@ -29,7 +26,7 @@ pub fn main() !void {
         try Cli.CommandRunner.run_single(args[1]);
     }
 
-    if (args.len < 3) {
+    if (args.len >= 3) {
         // TODO: Handle errors from Cli.run() as it can error "hard"
         const val = if (args.len > 2) args[2] else null;
         try Cli.CommandRunner.run(args[1], val);

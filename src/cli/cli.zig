@@ -2,30 +2,47 @@ const std = @import("std");
 const Tuple = std.meta.Tuple;
 const StrEql = std.mem.eql;
 const stdout = std.io.getStdOut().writer();
-pub const SupportedCommands = enum { install, remove, list, link, help };
 
 pub const Cli = @This();
 
 pub const CliError = error{ UnsupportedCommand, MissingArgumentPackageName };
+pub const SupportedCommands = enum { install, remove, list, link, help };
 
 pub const CommandRunner = struct {
     /// Run commands like
     /// pax install <packagename>
     /// where a command has an input like a name etc.
     pub fn run(cmd: []const u8, package: ?[]const u8) !void {
-        // TODO: Rework this into a switch to switch on the supported commands
         if (package == null) {
             return CliError.MissingArgumentPackageName;
-        } else if (StrEql(u8, cmd, "install")) {
-            try install(package.?);
-            std.log.debug("Found command: {s} with value {s}", .{ cmd, package.? });
-        } else if (StrEql(u8, cmd, "remove")) {
-            try remove(package.?);
-            std.log.debug("Found command: {s} with value {s}", .{ cmd, package.? });
-        } else if (StrEql(u8, cmd, "link")) {
-            try link(package.?);
-            std.log.debug("Found command: {s} with value {s}", .{ cmd, package.? });
         }
+
+        const case = std.meta.stringToEnum(SupportedCommands, package.?) orelse return CliError.UnsupportedCommand;
+
+        std.log.debug("case: {any}", .{case});
+
+        switch (case) {
+            .install => {
+                try install(package.?);
+                std.log.debug("Found command: {s} with value {s}", .{ cmd, package.? });
+            },
+            else => return CliError.UnsupportedCommand,
+        }
+
+        //
+        // // TODO: Rework this into a switch to switch on the supported commands
+        // if (package == null) {
+        //     return CliError.MissingArgumentPackageName;
+        // } else if (StrEql(u8, cmd, "install")) {
+        //     try install(package.?);
+        //     std.log.debug("Found command: {s} with value {s}", .{ cmd, package.? });
+        // } else if (StrEql(u8, cmd, "remove")) {
+        //     try remove(package.?);
+        //     std.log.debug("Found command: {s} with value {s}", .{ cmd, package.? });
+        // } else if (StrEql(u8, cmd, "link")) {
+        //     try link(package.?);
+        //     std.log.debug("Found command: {s} with value {s}", .{ cmd, package.? });
+        // }
     }
 
     /// run singluar commands only like list
