@@ -7,13 +7,13 @@ const Allocator = std.mem.Allocator;
 pub const cfg = @This();
 
 pub const ConfigError = error{ ConfigurataionAlreadyExists, CanNotRead, CanNotWrite, CanNotCreatePackagesDir };
-const install_dir = "~/.config/zigpkg/packages";
-const cache_dir = "~/.config/zigpkg/cache";
+const install_dir = "~/.config/pax/packages";
+const cache_dir = "~/.config/pax/cache";
 
 const config_file_path = &[_][]const u8{
     "~",
     ".config",
-    "zigpkg",
+    "pax",
     "config.zig.zon",
 };
 
@@ -87,8 +87,8 @@ pub fn create_initial_config() !void {
     // Resolve `~` to the home directory
     const home_opt = std.posix.getenv("HOME") orelse unreachable;
     const home: []const u8 = home_opt;
-    const cfg_dir = try fs.path.join(allocator, &.{ home, ".config", "zigpkg" });
-    const cfg_file_dir = try fs.path.join(allocator, &.{ home, ".config", "zigpkg", "config.zig.zon" });
+    const cfg_dir = try fs.path.join(allocator, &.{ home, ".config", "pax" });
+    const cfg_file_dir = try fs.path.join(allocator, &.{ home, ".config", "pax", "config.zig.zon" });
     defer allocator.free(cfg_dir);
     defer allocator.free(cfg_file_dir);
 
@@ -105,7 +105,7 @@ pub fn create_initial_config() !void {
     try file.writeAll(config_zon);
 }
 
-/// Write to the config in ~/.config/zigpkg/config.zig.zon
+/// Write to the config in ~/.config/pax/config.zig.zon
 /// This should be like writing a newly installed package
 /// or removing a package
 /// (upgrade package probably at a later point)

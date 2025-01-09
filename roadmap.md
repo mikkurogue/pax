@@ -4,11 +4,11 @@
 ### Potentially recruit/find people to include in this phase?
 
 [x] Basic CLI that accepts commands (just print something per command for now) - Needs to support windows (sadly)
-[] Each "run" of the CLI can only fire 1 command at a time. So `zigpkg install PACKAGENAME list` wont work, only `zigpkg install PACKAGENAME` and then afterwards `zigpkg list`. This is to simplify the argument parsing and the UX overhead 
+[] Each "run" of the CLI can only fire 1 command at a time. So `pax install PACKAGENAME list` wont work, only `pax install PACKAGENAME` and then afterwards `pax list`. This is to simplify the argument parsing and the UX overhead 
 
-[ ] Create a folder to store packages in i.e. ~/.zigpkg/ - this should be initialised only if the folder does not exist already
+[ ] Create a folder to store packages in i.e. ~/.config/pax/ - this should be initialised only if the folder does not exist already
 
-[ ] Use the [Zon](https://zon.dev/) to create the necessary configs. in ~/.zigpkg/packages.zon as the manifest that has the files. and in the project folder a packages.zon file to use to link packages to the build.zig.zon to make them available in the project. (later step)
+[ ] Use the [Zon](https://zon.dev/) to create the necessary configs. in ~/.config/pax/packages.zon as the manifest that has the files. and in the project folder a packages.zon file to use to link packages to the build.zig.zon to make them available in the project. (later step)
 
 [ ] Create functions that are the core for the install and remove commands. `install <url>` should download and install the tarball or git repo (idk what yet). `remove <package>` should remove the package from the filesystem. Both commands need to manipulate the config file.
 

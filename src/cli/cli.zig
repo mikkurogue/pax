@@ -8,7 +8,7 @@ pub const CliError = error{ UnsupportedCommand, MissingArgumentPackageName };
 
 pub const Cli = struct {
     /// Run commands like
-    /// zigpkg install <packagename>
+    /// pax install <packagename>
     /// where a command has an input like a name etc.
     pub fn run(cmd: []const u8, package: ?[]const u8) !void {
         // TODO: Rework this into a switch to switch on the supported commands
@@ -36,12 +36,12 @@ pub const Cli = struct {
     }
 };
 
-/// install a package to the system (essentially mkdir ~/.zigpkgs/packages/<packagename>/ and place tarball here)
+/// install a package to the system (essentially mkdir ~/.config/pax/packages/<packagename>/ and place tarball here)
 fn install(package: []const u8) !void {
     std.log.debug("install this package: {s} ", .{package});
 }
 
-/// remove a package from the system (essentially rm -rf ~/.zigpkgs/packages/<packagename>/)
+/// remove a package from the system (essentially rm -rf ~/.config/pax/packages/<packagename>/)
 fn remove(package: []const u8) !void {
     std.log.debug("remove this package: {s}", .{package});
 }
@@ -51,7 +51,7 @@ fn link(package: []const u8) !void {
     std.log.debug("link package to current project: {s}", .{package});
 }
 
-/// list all insatlled packages on the system - these will be in ~/.zigpkg/packages/
+/// list all insatlled packages on the system - these will be in ~/.config/paxpackages/
 fn list() !void {
     std.log.debug("list installed system packages", .{});
 }

@@ -18,7 +18,7 @@ pub fn read_system_package_data(package_name: []const u8) !Package {
 
     // TODO:
     // Read package metadata from a package that is installed on the system
-    // the install path then is ~/.config/zigpkg/packages
+    // the install path then is ~/.config/pax/packages
 
     // placeholder for now
     return Package{ .package_name = package_name, .package_version = "0.0.0", .package_url = "github.com/mikkurogue" };
@@ -73,7 +73,7 @@ pub fn clean_packages() !void {}
 pub fn upgrade_packages() !void {}
 
 /// Upgrade a single package - this is meant to be the lib function
-/// to the cli command `zigpkg upgrade <packagename>`
+/// to the cli command `pax upgrade <packagename>`
 /// fetch the package version currently installed on the system
 /// and check this against the registry version
 /// if local is higher then return "Currently installed version is newer"
