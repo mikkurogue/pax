@@ -4,6 +4,8 @@ const Tuple = std.meta.Tuple;
 const StrEql = std.mem.eql;
 const Allocator = std.mem.Allocator;
 
+pub const cfg = @This();
+
 pub const ConfigError = error{ ConfigurataionAlreadyExists, CanNotRead, CanNotWrite, CanNotCreatePackagesDir };
 const install_dir = "~/.config/zigpkg/packages";
 const cache_dir = "~/.config/zigpkg/cache";
@@ -15,13 +17,13 @@ const config_file_path = &[_][]const u8{
     "config.zig.zon",
 };
 
-const PackageItem = struct { package_name: []const u8, package_version: []const u8, package_url: []const u8 };
-
 // this is probably not necessary
 pub const Config = struct {
     install_dir: []const u8,
     cache_dir: []const u8,
 
+    // this should be of type []pkg.Package.
+    // i just dont know yet how to make the slice dynamic
     packages: []const u8,
 
     /// Try to use this in reference to the struct when in it.
@@ -29,6 +31,7 @@ pub const Config = struct {
     /// the struct at some point.
     const Self = @This();
 
+    /// init a new package.
     pub fn init(self: *Self, idir: []const u8, cdir: []const u8, p: []const u8) !Self {
         _ = self;
         return .Self{
@@ -77,9 +80,9 @@ pub const Config = struct {
 };
 
 pub fn create_initial_config() !void {
-    var gpa = std.heap.GeneralPurposeAllocator(.{}){};
-    const allocator = gpa.allocator();
-    defer _ = gpa.deinit();
+    var arena = std.heap.ArenaAllocator.init(std.heap.page_allocator);
+    defer arena.deinit();
+    const allocator = arena.allocator();
 
     // Resolve `~` to the home directory
     const home_opt = std.posix.getenv("HOME") orelse unreachable;
@@ -96,8 +99,8 @@ pub fn create_initial_config() !void {
     };
     defer file.close();
 
-    var cfg = Config.default();
-    const config_zon = try cfg.toZon(allocator);
+    var default_cfg = Config.default();
+    const config_zon = try default_cfg.toZon(allocator);
     defer allocator.free(config_zon);
     try file.writeAll(config_zon);
 }
@@ -108,9 +111,9 @@ pub fn create_initial_config() !void {
 /// (upgrade package probably at a later point)
 pub fn write_to_config(package: []const u8, action: []const u8) !void {
     _ = package;
-    var gpa = std.heap.GeneralPurposeAllocator(.{}){};
-    const allocator = gpa.allocator();
-    defer _ = gpa.deinit();
+    var arena = std.heap.ArenaAllocator.init(std.heap.page_allocator);
+    defer arena.deinit();
+    const allocator = arena.allocator();
 
     const config_file = try fs.path.join(allocator, config_file_path);
     defer allocator.free(config_file);
@@ -149,9 +152,9 @@ pub fn write_to_config(package: []const u8, action: []const u8) !void {
 /// Read from the config to be able to find an installed package on the system
 /// this has nothing to do with the registry yet
 pub fn read_from_config(package: []const u8) !void {
-    var gpa = std.heap.GeneralPurposeAllocator(.{}){};
-    const allocator = gpa.allocator();
-    defer _ = gpa.deinit();
+    var arena = std.heap.ArenaAllocator.init(std.heap.page_allocator);
+    defer arena.deinit();
+    const allocator = arena.allocator();
 
     const config_file = try fs.path.join(allocator, config_file_path);
     defer allocator.free(config_file);

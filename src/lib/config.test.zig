@@ -1,5 +1,5 @@
 const std = @import("std");
-const config = @import("config.zig");
+const cfg = @import("config.zig");
 const fs = std.fs;
 
 // TODO:
@@ -9,7 +9,7 @@ const fs = std.fs;
 // ironic, a package manager who wants to use no packages...
 
 test "create_initial_config creates default config file" {
-    config.create_initial_config() catch |err| {
+    cfg.create_initial_config() catch |err| {
         std.log.warn("Error during config creation: {}", .{err});
         return;
     };
