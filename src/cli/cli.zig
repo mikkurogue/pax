@@ -4,9 +4,11 @@ const StrEql = std.mem.eql;
 const stdout = std.io.getStdOut().writer();
 pub const SupportedCommands = enum { install, remove, list, link, help };
 
+pub const Cli = @This();
+
 pub const CliError = error{ UnsupportedCommand, MissingArgumentPackageName };
 
-pub const Cli = struct {
+pub const CommandRunner = struct {
     /// Run commands like
     /// pax install <packagename>
     /// where a command has an input like a name etc.

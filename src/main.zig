@@ -26,12 +26,12 @@ pub fn main() !void {
     if (args.len == 2) {
         // TODO: Handle error from Cli.run_single() as it can error "hard"
         // but only realistically on typos which we can handle in a different way
-        try Cli.run_single(args[1]);
+        try Cli.CommandRunner.run_single(args[1]);
     }
 
     if (args.len < 3) {
         // TODO: Handle errors from Cli.run() as it can error "hard"
         const val = if (args.len > 2) args[2] else null;
-        try Cli.run(args[1], val);
+        try Cli.CommandRunner.run(args[1], val);
     }
 }
