@@ -37,6 +37,10 @@ pub const ZonParser = struct {
         inline for (struct_fields) |f| {
             const name = f.name;
             const val = @field(input, name);
+            if (f.type == []const u8) {
+                try writer.print("    .{s} = \"{s}\",\n", .{ name, val });
+                break;
+            }
             try writer.print("    .{s} = {},\n", .{ name, val });
         }
         try writer.print(END_ZON, .{});
@@ -91,13 +95,9 @@ pub const ZonParser = struct {
 };
 
 test "test writing to zon file" {
-    const TStruct = struct { x: u8, y: u16, z: f32 };
+    const TStruct = struct { x: u8, y: u16, z: f32, space: []const u8 };
 
-    const t = TStruct{
-        .x = 10,
-        .y = 300,
-        .z = 3.14,
-    };
+    const t = TStruct{ .x = 10, .y = 300, .z = 3.14, .space = "The universe" };
 
     try ZonParser.marshal_dynamic(TStruct, t, "");
 }
