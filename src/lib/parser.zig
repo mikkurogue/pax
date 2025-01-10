@@ -42,3 +42,14 @@ pub const ZonParser = struct {
         _ = input;
     }
 };
+
+test "test writing to zon file" {
+    const TStruct = struct { a: u8, b: u8 };
+
+    const t = TStruct{
+        .a = 0,
+        .b = 1,
+    };
+
+    try ZonParser.marshal(TStruct, t, "");
+}

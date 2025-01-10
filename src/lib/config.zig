@@ -165,3 +165,31 @@ pub fn read_from_config(package: []const u8) !void {
 
     // TODO: parse the file content and find the package given in the props
 }
+
+// TESTS
+
+test "test appending to array list" {
+    var gpa = std.heap.GeneralPurposeAllocator(.{}){};
+    const allocator = gpa.allocator();
+
+    var c = try cfg.Config.init("", "", allocator);
+    defer c.deinit();
+
+    try c.append_pkg(pkg.Package{
+        .package_url = "test url",
+        .package_name = "test name",
+        .package_version = "version test",
+    });
+
+    var i: usize = 0;
+    while (i < c.packages.items.len) : (i += 1) {
+        std.log.warn("{s} - {s} - {s}", .{ c.packages.items[i].package_name, c.packages.items[i].package_version, c.packages.items[i].package_version });
+    }
+}
+
+test "create_initial_config creates default config file" {
+    cfg.create_initial_config() catch |err| {
+        std.log.warn("Error during config creation: {}", .{err});
+        return;
+    };
+}
