@@ -85,8 +85,10 @@ pub const ZonParser = struct {
 };
 
 fn parseAndAssignValue(comptime FieldType: type, ptr: *FieldType, value: []const u8) !void {
-    switch (@typeInfo(FieldType)) {
-        .Int => {
+    const type_info = @typeInfo(FieldType);
+
+    switch (type_info) {
+        .int => {
             // Clean up the value string by removing any commas
             var cleaned_value = std.ArrayList(u8).init(std.heap.page_allocator);
             defer cleaned_value.deinit();
@@ -98,10 +100,10 @@ fn parseAndAssignValue(comptime FieldType: type, ptr: *FieldType, value: []const
             }
             ptr.* = try std.fmt.parseInt(FieldType, cleaned_value.items, 10);
         },
-        .Float => {
+        .float => {
             ptr.* = try std.fmt.parseFloat(FieldType, value);
         },
-        .Array, .Pointer => |ptr_info| {
+        .pointer => |ptr_info| {
             if (ptr_info.size == .Slice and ptr_info.child == u8) {
                 // Handle string by removing quotes if present
                 if (value.len >= 2 and value[0] == '"' and value[value.len - 1] == '"') {
