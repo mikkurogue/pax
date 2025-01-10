@@ -5,6 +5,8 @@ const Cli = @import("cli/cli.zig").Cli;
 
 const StrEql = std.mem.eql;
 
+const parser = @import("lib/parser.zig").ZonParser;
+
 pub fn main() !void {
     var gpa = std.heap.GeneralPurposeAllocator(.{}){};
     const allocator = gpa.allocator();
@@ -12,6 +14,12 @@ pub fn main() !void {
 
     const args = try process.argsAlloc(allocator);
     defer process.argsFree(allocator, args);
+
+    const TStruct = struct { a: u8, b: u8 };
+
+    const x = try parser.parse_dynamic(TStruct, "output.zig.zon");
+
+    std.log.debug("PARSED ZON: {any}", .{x});
 
     // NOTE: This is is just poc to get things started.
 

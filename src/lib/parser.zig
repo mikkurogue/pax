@@ -9,47 +9,105 @@
 
 const std = @import("std");
 const assert = std.debug.assert;
+const stdout = std.io.getStdOut().writer();
 
 const Parser = @This();
 
+const START_ZON = ".{{\n";
+const END_ZON = "}}\n";
+const DELIMITERS = "\n,{},=";
+
 pub const ZonParser = struct {
-    /// marshal a struct and write it to a file
-    /// T must be a struct, so need to add some form of validation
-    pub fn marshal(comptime T: type, input: T, output: []const u8) !void {
-        // figure out how we can assert the type of input to be a struct
-        // it isnt necessarily an anonymous struct
-        // comptime assert(@typeInfo(@TypeOf(input)).@"struct".layout != .auto);
-        // For no ignore the output as this needs more testing
+    pub fn marshal_dynamic(comptime T: type, input: T, output: []const u8) !void {
+        // Ignore output for now
         _ = output;
 
-        // Open the .zon file
-        const file = try std.fs.cwd().createFile("output.zig.zon", .{});
-
+        // Create the output file
+        const file = try std.fs.cwd().createFile("output_dynamic.zig.zon", .{});
         defer file.close();
 
-        // Create a writer for the file
         var writer = file.writer();
 
-        // Serialize to .zon format
-        try writer.print(".{{\n    .a = {},\n    .b = {}\n}}\n", .{ input.a, input.b });
+        try writer.print(START_ZON, .{});
 
-        std.debug.print("Structure written to .zon file\n", .{});
+        const type_info = @typeInfo(T);
+
+        const struct_fields = type_info.@"struct".fields;
+        inline for (struct_fields) |f| {
+            const name = f.name;
+            const val = @field(input, name);
+            try writer.print("    .{s} = {},\n", .{ name, val });
+        }
+        try writer.print(END_ZON, .{});
+
+        std.log.debug("Dynamic structure written to .zon file\n", .{});
     }
 
-    // parse an input file and marshal this into a struct of type T
-    // T must be a struct, so need to add some form of validation
-    pub fn parse(comptime T: type, input: anytype) !T {
-        _ = input;
+    pub fn parse_dynamic(comptime T: type, input: []const u8) !T {
+        const file = try std.fs.cwd().openFile(input, .{});
+        defer file.close();
+
+        const content = try file.readToEndAlloc(std.heap.page_allocator, 512);
+        defer std.heap.page_allocator.free(content);
+
+        var result: T = @as(T, undefined);
+
+        const delimiters = DELIMITERS;
+        var tokenizer = std.mem.tokenizeAny(u8, content, delimiters);
+
+        // FIXME: This needs to parse the values correctly, somehow the field type is known
+        // but the value token isnt parsed correctly.
+        // i.e. if the value_token is 0 (or 1 doesnt matter) then the output is 170
+        // idk what im doing wrong here
+        inline for (@typeInfo(T).@"struct".fields) |field| {
+            while (tokenizer.next()) |token| {
+                if (token.len == 0 or token[0] != '.') continue;
+
+                const field_name = token[1..];
+                if (!std.mem.eql(u8, field.name, field_name)) continue;
+
+                const value_token = tokenizer.next() orelse return error.InvalidFormat;
+
+                switch (field.type) {
+                    u8, u16, u32, u64 => {
+                        @field(result, field.name) = try std.fmt.parseInt(field.type, value_token, 10);
+                    },
+                    f32, f64 => {
+                        @field(result, field.name) = try std.fmt.parseFloat(field.type, value_token);
+                    },
+                    []const u8 => {
+                        @field(result, field.name) = value_token;
+                    },
+                    else => @compileError("Unsupported type"),
+                }
+                break;
+            }
+        }
+
+        return result;
     }
 };
 
 test "test writing to zon file" {
-    const TStruct = struct { a: u8, b: u8 };
+    const TStruct = struct { x: u8, y: u16, z: f32 };
 
     const t = TStruct{
-        .a = 0,
-        .b = 1,
+        .x = 10,
+        .y = 300,
+        .z = 3.14,
     };
 
-    try ZonParser.marshal(TStruct, t, "");
+    try ZonParser.marshal_dynamic(TStruct, t, "");
+}
+
+test "parse dynamic .zon file" {
+    const MyStruct = struct {
+        x: u8,
+        y: u16,
+        z: f32,
+    };
+
+    const parsed = try ZonParser.parse_dynamic(MyStruct, "output_dynamic.zig.zon");
+
+    std.log.warn("PARSED X: {d}", .{parsed.x});
 }
