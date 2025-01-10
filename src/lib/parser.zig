@@ -15,7 +15,7 @@ const Parser = @This();
 
 const START_ZON = ".{{\n";
 const END_ZON = "}}\n";
-const DELIMITERS = "\n,{},=";
+const DELIMITERS = "\n,{},=,\r, ,    ";
 
 pub const ZonParser = struct {
     /// Dynamically marshal a struct of type T to into a .zig.zon file format.
@@ -66,10 +66,12 @@ pub const ZonParser = struct {
                 if (token.len == 0 or token[0] != '.') continue;
 
                 const field_name = token[1..];
+
                 if (!std.mem.eql(u8, field.name, field_name)) continue;
 
                 // Skip any potential equals sign token
                 const maybe_equals = tokenizer.next() orelse return error.InvalidFormat;
+
                 if (!std.mem.eql(u8, maybe_equals, "=")) {
                     // If it's not an equals sign, it's our value
                     try parseAndAssignValue(field.type, &@field(result, field.name), maybe_equals);
@@ -89,7 +91,6 @@ fn parseAndAssignValue(comptime FieldType: type, ptr: *FieldType, value: []const
 
     switch (type_info) {
         .int => {
-            // Clean up the value string by removing any commas
             var cleaned_value = std.ArrayList(u8).init(std.heap.page_allocator);
             defer cleaned_value.deinit();
 
@@ -105,9 +106,11 @@ fn parseAndAssignValue(comptime FieldType: type, ptr: *FieldType, value: []const
         },
         .pointer => |ptr_info| {
             if (ptr_info.size == .Slice and ptr_info.child == u8) {
-                // Handle string by removing quotes if present
                 if (value.len >= 2 and value[0] == '"' and value[value.len - 1] == '"') {
-                    ptr.* = value[1 .. value.len - 1];
+                    const v = value[1 .. value.len - 1];
+                    // ptr.* = value[0 .. value.len - 1];
+                    std.log.err("{s}", .{v});
+                    ptr.* = v;
                 } else {
                     ptr.* = value;
                 }
@@ -120,23 +123,17 @@ fn parseAndAssignValue(comptime FieldType: type, ptr: *FieldType, value: []const
 }
 
 test "test writing to zon file" {
-    const TStruct = struct {
-        x: i32,
-    };
+    const TStruct = struct { x: i32, y: i32, z: f32, s: []const u8 };
 
-    const t = TStruct{ .x = 10 };
+    const t = TStruct{ .x = 10, .y = 999, .z = 3.14, .s = "hello" };
 
     try ZonParser.marshal_dynamic(TStruct, t, "");
 }
 
 test "parse dynamic .zon file" {
-    const MyStruct = struct {
-        x: u8,
-        y: u16,
-        z: f32,
-    };
+    const MyStruct = struct { x: i32, y: i32, z: f32, s: []const u8 };
 
     const parsed = try ZonParser.parse_dynamic(MyStruct, "output_dynamic.zig.zon");
 
-    std.log.warn("PARSED X: {d}", .{parsed.x});
+    std.log.warn("PARSED: {s}", .{parsed.s});
 }
