@@ -56,15 +56,11 @@ pub const ZonParser = struct {
         const content = try file.readToEndAlloc(std.heap.page_allocator, 512);
         defer std.heap.page_allocator.free(content);
 
-        var result: T = @as(T, undefined);
+        var result: T = undefined;
 
         const delimiters = DELIMITERS;
         var tokenizer = std.mem.tokenizeAny(u8, content, delimiters);
 
-        // FIXME: This needs to parse the values correctly, somehow the field type is known
-        // but the value token isnt parsed correctly.
-        // i.e. if the value_token is 0 (or 1 doesnt matter) then the output is 170
-        // idk what im doing wrong here
         inline for (@typeInfo(T).@"struct".fields) |field| {
             while (tokenizer.next()) |token| {
                 if (token.len == 0 or token[0] != '.') continue;
@@ -72,27 +68,54 @@ pub const ZonParser = struct {
                 const field_name = token[1..];
                 if (!std.mem.eql(u8, field.name, field_name)) continue;
 
-                const value_token = tokenizer.next() orelse return error.InvalidFormat;
-
-                switch (field.type) {
-                    u8, u16, u32, u64 => {
-                        @field(result, field.name) = try std.fmt.parseInt(field.type, value_token, 10);
-                    },
-                    f32, f64 => {
-                        @field(result, field.name) = try std.fmt.parseFloat(field.type, value_token);
-                    },
-                    []const u8 => {
-                        @field(result, field.name) = value_token;
-                    },
-                    else => @compileError("Unsupported type"),
+                // Skip any potential equals sign token
+                const maybe_equals = tokenizer.next() orelse return error.InvalidFormat;
+                if (!std.mem.eql(u8, maybe_equals, "=")) {
+                    // If it's not an equals sign, it's our value
+                    try parseAndAssignValue(field.type, &@field(result, field.name), maybe_equals);
+                } else {
+                    const value_token = tokenizer.next() orelse return error.InvalidFormat;
+                    try parseAndAssignValue(field.type, &@field(result, field.name), value_token);
                 }
                 break;
             }
         }
-
         return result;
     }
 };
+
+fn parseAndAssignValue(comptime FieldType: type, ptr: *FieldType, value: []const u8) !void {
+    switch (@typeInfo(FieldType)) {
+        .Int => {
+            // Clean up the value string by removing any commas
+            var cleaned_value = std.ArrayList(u8).init(std.heap.page_allocator);
+            defer cleaned_value.deinit();
+
+            for (value) |c| {
+                if (c != ',') {
+                    try cleaned_value.append(c);
+                }
+            }
+            ptr.* = try std.fmt.parseInt(FieldType, cleaned_value.items, 10);
+        },
+        .Float => {
+            ptr.* = try std.fmt.parseFloat(FieldType, value);
+        },
+        .Array, .Pointer => |ptr_info| {
+            if (ptr_info.size == .Slice and ptr_info.child == u8) {
+                // Handle string by removing quotes if present
+                if (value.len >= 2 and value[0] == '"' and value[value.len - 1] == '"') {
+                    ptr.* = value[1 .. value.len - 1];
+                } else {
+                    ptr.* = value;
+                }
+            } else {
+                @compileError("Unsupported pointer type");
+            }
+        },
+        else => @compileError("Unsupported type"),
+    }
+}
 
 test "test writing to zon file" {
     const TStruct = struct { x: u8, y: u16, z: f32, space: []const u8 };
@@ -103,13 +126,9 @@ test "test writing to zon file" {
 }
 
 test "parse dynamic .zon file" {
-    const MyStruct = struct {
-        x: u8,
-        y: u16,
-        z: f32,
-    };
+    const MyStruct = struct { x: u8, y: u16, z: f32, space: []const u8 };
 
     const parsed = try ZonParser.parse_dynamic(MyStruct, "output_dynamic.zig.zon");
 
-    std.log.warn("PARSED X: {d}", .{parsed.x});
+    std.log.warn("PARSED X: {s}", .{parsed.space});
 }
