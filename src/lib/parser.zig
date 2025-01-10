@@ -13,12 +13,14 @@ const Parser = @This();
 
 pub const ZonParser = struct {
     /// marshal a struct and write it to a file
+    /// T must be a struct, so need to add some form of validation
     pub fn marshal(comptime T: type, input: T, output: []const u8) !void {
         _ = input;
         _ = output;
     }
 
     // parse an input file and marshal this into a struct of type T
+    // T must be a struct, so need to add some form of validation
     pub fn parse(comptime T: type, input: anytype) !T {
         _ = input;
     }
