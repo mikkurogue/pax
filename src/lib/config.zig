@@ -44,7 +44,7 @@ pub const Config = struct {
         var gpa = std.heap.GeneralPurposeAllocator(.{}){};
         const allocator = gpa.allocator();
 
-        const pkg_arr = std.ArrayList(pkg.Package).init(allocator);
+        var pkg_arr = std.ArrayList(pkg.Package).init(allocator);
         defer pkg_arr.deinit();
 
         try pkg_arr.append(p);
