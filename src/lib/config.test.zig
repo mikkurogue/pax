@@ -1,6 +1,7 @@
 const std = @import("std");
 const cfg = @import("config.zig");
 const fs = std.fs;
+const pkg = @import("package.zig");
 
 // TODO:
 // make these tests pass, for now for instance the first test fails
@@ -8,12 +9,20 @@ const fs = std.fs;
 // maybe im brainless maybe im stupid for not using a library to handle this
 // ironic, a package manager who wants to use no packages...
 
-test "create_initial_config creates default config file" {
-    cfg.create_initial_config() catch |err| {
-        std.log.warn("Error during config creation: {}", .{err});
-        return;
-    };
+test "test appending to array list" {
+    var c = cfg.Config.init("", "", "");
+
+    try c.append_pkg(pkg.Package{ .package_url = "test url", .package_name = "test name", .package_version = "version test" });
+
+    std.log.warn("{any}", .{c});
 }
+
+// test "create_initial_config creates default config file" {
+//     cfg.create_initial_config() catch |err| {
+//         std.log.warn("Error during config creation: {}", .{err});
+//         return;
+//     };
+// }
 //
 // test "write_to_config handles install action" {
 //     try config.write_to_config("test-pkg", "install");

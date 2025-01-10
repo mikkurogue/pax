@@ -3,6 +3,7 @@ const fs = std.fs;
 const Tuple = std.meta.Tuple;
 const StrEql = std.mem.eql;
 const Allocator = std.mem.Allocator;
+const pkg = @import("package.zig");
 
 pub const cfg = @This();
 
@@ -25,6 +26,7 @@ pub const Config = struct {
     // this should be of type []pkg.Package.
     // i just dont know yet how to make the slice dynamic
     packages: []const u8,
+    pkgs: std.ArrayList(pkg.Package),
 
     /// Try to use this in reference to the struct when in it.
     /// Should clear up confusion when also using other structs inside
@@ -32,13 +34,20 @@ pub const Config = struct {
     const Self = @This();
 
     /// init a new package.
-    pub fn init(self: *Self, idir: []const u8, cdir: []const u8, p: []const u8) !Self {
+    pub fn init(idir: []const u8, cdir: []const u8, p: []const u8) Self {
+        return .{ .install_dir = idir, .cache_dir = cdir, .packages = p, .pkgs = undefined };
+    }
+
+    pub fn append_pkg(self: *Self, p: pkg.Package) !void {
         _ = self;
-        return .Self{
-            .install_dir = idir,
-            .cache_dir = cdir,
-            .packages = p,
-        };
+
+        var gpa = std.heap.GeneralPurposeAllocator(.{}){};
+        const allocator = gpa.allocator();
+
+        const pkg_arr = std.ArrayList(pkg.Package).init(allocator);
+        defer pkg_arr.deinit();
+
+        try pkg_arr.append(p);
     }
 
     /// Only use this to test stuff.
