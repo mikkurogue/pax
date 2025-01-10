@@ -25,44 +25,29 @@ pub const Config = struct {
 
     // this should be of type []pkg.Package.
     // i just dont know yet how to make the slice dynamic
-    packages: []const u8,
-    pkgs: std.ArrayList(pkg.Package),
+    packages: std.ArrayList(pkg.Package),
 
     /// Try to use this in reference to the struct when in it.
     /// Should clear up confusion when also using other structs inside
     /// the struct at some point.
     const Self = @This();
 
-    /// init a new package.
-    pub fn init(idir: []const u8, cdir: []const u8, p: []const u8) Self {
-        return .{ .install_dir = idir, .cache_dir = cdir, .packages = p, .pkgs = undefined };
+    /// init a new configuration.
+    pub fn init(idir: []const u8, cdir: []const u8, allocator: Allocator) !Self {
+        return .{ .install_dir = idir, .cache_dir = cdir, .packages = std.ArrayList(pkg.Package).init(allocator) };
     }
 
+    /// clean up resources
+    pub fn deinit(self: *Self) void {
+        self.packages.deinit();
+    }
+
+    /// append a package to the arraylist
     pub fn append_pkg(self: *Self, p: pkg.Package) !void {
-        _ = self;
-
-        var gpa = std.heap.GeneralPurposeAllocator(.{}){};
-        const allocator = gpa.allocator();
-
-        var pkg_arr = std.ArrayList(pkg.Package).init(allocator);
-        defer pkg_arr.deinit();
-
-        try pkg_arr.append(p);
+        try self.packages.append(p);
     }
 
-    /// Only use this to test stuff.
-    /// if we want to initialise a new config struct and populate it,
-    /// use the init func.
-    /// possible allow for allocation?
-    /// have to see if its necessary to allocate while running the cli
-    pub fn default() Self {
-        return Self{
-            .install_dir = install_dir,
-            .cache_dir = cache_dir,
-            .packages = "Test package",
-        };
-    }
-
+    /// Migrate this to the parser to write the struct instead of appending to a string buffer.
     pub fn toZon(self: *Self, allocator: std.mem.Allocator) ![]const u8 {
         // _ = self;
         var buffer = std.ArrayList(u8).init(allocator);
@@ -108,10 +93,11 @@ pub fn create_initial_config() !void {
     };
     defer file.close();
 
-    var default_cfg = Config.default();
-    const config_zon = try default_cfg.toZon(allocator);
-    defer allocator.free(config_zon);
-    try file.writeAll(config_zon);
+    // this is now broken because we dont use the default anymore. we need to figure out what to do
+    // var default_cfg = Config.init(install_dir, cache_dir, allocator);
+    // const config_zon = try default_cfg.toZon(allocator);
+    // defer allocator.free(config_zon);
+    // try file.writeAll(config_zon);
 }
 
 /// Write to the config in ~/.config/pax/config.zig.zon
@@ -134,7 +120,7 @@ pub fn write_to_config(package: []const u8, action: []const u8) !void {
     const content = try file.readAll(&buffer);
     _ = content;
 
-    var config = Config.default();
+    var config = Config.init(install_dir, cache_dir, allocator);
     // parse the content into config, replacing whatever may be needed to be replaced.
 
     if (StrEql(u8, action, "install")) {
