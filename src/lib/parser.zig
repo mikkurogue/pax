@@ -8,3 +8,18 @@
 //! meaning we can also extract the properties from it.
 
 const std = @import("std");
+
+const Parser = @This();
+
+pub const ZonParser = struct {
+    /// marshal a struct and write it to a file
+    pub fn marshal(comptime T: type, input: T, output: []const u8) !void {
+        _ = input;
+        _ = output;
+    }
+
+    // parse an input file and marshal this into a struct of type T
+    pub fn parse(comptime T: type, input: anytype) !T {
+        _ = input;
+    }
+};
