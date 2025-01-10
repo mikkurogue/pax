@@ -18,6 +18,7 @@ const END_ZON = "}}\n";
 const DELIMITERS = "\n,{},=";
 
 pub const ZonParser = struct {
+    /// Dynamically marshal a struct of type T to into a .zig.zon file format.
     pub fn marshal_dynamic(comptime T: type, input: T, output: []const u8) !void {
         // Ignore output for now
         _ = output;
@@ -43,6 +44,7 @@ pub const ZonParser = struct {
         std.log.debug("Dynamic structure written to .zon file\n", .{});
     }
 
+    /// Dyanimically read a .zig.zon file into a struct of type T.
     pub fn parse_dynamic(comptime T: type, input: []const u8) !T {
         const file = try std.fs.cwd().openFile(input, .{});
         defer file.close();
