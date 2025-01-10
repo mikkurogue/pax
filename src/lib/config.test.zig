@@ -10,19 +10,30 @@ const pkg = @import("package.zig");
 // ironic, a package manager who wants to use no packages...
 
 test "test appending to array list" {
-    var c = cfg.Config.init("", "", "");
+    var gpa = std.heap.GeneralPurposeAllocator(.{}){};
+    const allocator = gpa.allocator();
 
-    try c.append_pkg(pkg.Package{ .package_url = "test url", .package_name = "test name", .package_version = "version test" });
+    var c = try cfg.Config.init("", "", allocator);
+    defer c.deinit();
 
-    std.log.warn("{any}", .{c});
+    try c.append_pkg(pkg.Package{
+        .package_url = "test url",
+        .package_name = "test name",
+        .package_version = "version test",
+    });
+
+    var i: usize = 0;
+    while (i < c.packages.items.len) : (i += 1) {
+        std.log.warn("{s} - {s} - {s}", .{ c.packages.items[i].package_name, c.packages.items[i].package_version, c.packages.items[i].package_version });
+    }
 }
 
-// test "create_initial_config creates default config file" {
-//     cfg.create_initial_config() catch |err| {
-//         std.log.warn("Error during config creation: {}", .{err});
-//         return;
-//     };
-// }
+test "create_initial_config creates default config file" {
+    cfg.create_initial_config() catch |err| {
+        std.log.warn("Error during config creation: {}", .{err});
+        return;
+    };
+}
 //
 // test "write_to_config handles install action" {
 //     try config.write_to_config("test-pkg", "install");
