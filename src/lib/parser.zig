@@ -49,12 +49,7 @@ pub const ZonParser = struct {
     }
 
     /// Dyanimically read a .zig.zon file into a struct of type T.
-    pub fn parse_dynamic(comptime T: type, allocator: std.mem.Allocator, input: []const u8) !T {
-        const file = try std.fs.cwd().openFile(input, .{});
-        defer file.close();
-
-        const content = try file.readToEndAlloc(allocator, 512);
-
+    pub fn parse_dynamic(comptime T: type, content: []const u8) !T {
         var result: T = undefined;
 
         const delimiters = DELIMITERS;
@@ -82,7 +77,6 @@ pub const ZonParser = struct {
             }
         }
 
-        // allocator.free(content);
         return result;
     }
 };
@@ -109,8 +103,6 @@ fn parseAndAssignValue(comptime FieldType: type, ptr: *FieldType, value: []const
             if (ptr_info.size == .Slice and ptr_info.child == u8) {
                 if (value.len >= 2 and value[0] == '"' and value[value.len - 1] == '"') {
                     const v = value[1 .. value.len - 1];
-                    // ptr.* = value[0 .. value.len - 1];
-                    std.log.err("{s}", .{v});
                     ptr.* = v;
                 } else {
                     ptr.* = value;
@@ -133,11 +125,12 @@ test "test writing to zon file" {
 
 test "parse dynamic .zon file" {
     const MyStruct = struct { x: i32, y: i32, z: f32, s: []const u8 };
+    const file = try std.fs.cwd().openFile("output_dynamic.zig.zon", .{});
+    defer file.close();
 
-    const parsed = try ZonParser.parse_dynamic(
-        MyStruct,
-        std.testing.allocator,
-        "output_dynamic.zig.zon",
-    );
-    std.log.warn("PARSED: {s}", .{parsed.s});
+    const content = try file.readToEndAlloc(std.testing.allocator, 512);
+    defer std.testing.allocator.free(content);
+    const parsed = try ZonParser.parse_dynamic(MyStruct, content);
+
+    try std.testing.expect(std.mem.eql(u8, parsed.s, "hello"));
 }
