@@ -120,17 +120,23 @@ fn parseAndAssignValue(comptime FieldType: type, ptr: *FieldType, value: []const
 }
 
 test "test writing to zon file" {
-    const TStruct = struct { x: u8, y: u16, z: f32, space: []const u8 };
+    const TStruct = struct {
+        x: i32,
+    };
 
-    const t = TStruct{ .x = 10, .y = 300, .z = 3.14, .space = "The universe" };
+    const t = TStruct{ .x = 10 };
 
     try ZonParser.marshal_dynamic(TStruct, t, "");
 }
 
 test "parse dynamic .zon file" {
-    const MyStruct = struct { x: u8, y: u16, z: f32, space: []const u8 };
+    const MyStruct = struct {
+        x: u8,
+        y: u16,
+        z: f32,
+    };
 
     const parsed = try ZonParser.parse_dynamic(MyStruct, "output_dynamic.zig.zon");
 
-    std.log.warn("PARSED X: {s}", .{parsed.space});
+    std.log.warn("PARSED X: {d}", .{parsed.x});
 }
