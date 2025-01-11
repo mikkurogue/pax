@@ -10,6 +10,7 @@
 const std = @import("std");
 const assert = std.debug.assert;
 const stdout = std.io.getStdOut().writer();
+const Allocator = std.mem.Allocator;
 
 const Parser = @This();
 
@@ -19,12 +20,13 @@ const DELIMITERS = "\n,{},=,\r, ,    ";
 
 pub const ZonParser = struct {
     /// Dynamically marshal a struct of type T to into a .zig.zon file format.
-    pub fn marshal_dynamic(comptime T: type, input: T, output: []const u8) !void {
-        // Ignore output for now
-        _ = output;
+    /// file_name can be a maximum of 24 characters long
+    pub fn marshal_dynamic(comptime T: type, input: T, file_name: []const u8) !void {
+        var buf: [32]u8 = undefined;
+        const suffix = ".zig.zon";
+        const buf_slice = try std.fmt.bufPrint(&buf, "{s}{s}", .{ file_name, suffix });
 
-        // Create the output file
-        const file = try std.fs.cwd().createFile("output_dynamic.zig.zon", .{});
+        const file = try std.fs.cwd().createFile(buf_slice, .{});
         defer file.close();
 
         var writer = file.writer();
@@ -120,7 +122,7 @@ test "test writing to zon file" {
 
     const t = TStruct{ .x = 10, .y = 999, .z = 3.14, .s = "hello" };
 
-    try ZonParser.marshal_dynamic(TStruct, t, "");
+    try ZonParser.marshal_dynamic(TStruct, t, "test_file");
 }
 
 test "parse dynamic .zon file" {
