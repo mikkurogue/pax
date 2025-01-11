@@ -2,12 +2,18 @@ const std = @import("std");
 const Tuple = std.meta.Tuple;
 const StrEql = std.mem.eql;
 const stdout = std.io.getStdOut().writer();
+const init_prj = @import("./init_prj.zig");
 
 pub const Cli = @This();
 
-pub const CliError = error{ UnsupportedCommand, MissingArgumentPackageName };
-pub const SupportedCommands = enum { install, remove, list, link, help };
+/// The potential CLI errors that can occur.
+/// UnsupportedCommand is a command that is not available in the SupportedCommands enum.
+pub const CliError = error{ UnsupportedCommand, MissingArgumentPackageName, UnsupportedOrInvalidCommand };
+/// All supported commands
+pub const SupportedCommands = enum { install, remove, list, link, help, init };
 
+/// Basic CommandRunner struct to make sure we use the correct commands
+/// Command syntaxx is `pax install <packagename>` for instance.
 pub const CommandRunner = struct {
     /// Run commands like
     /// pax install <packagename>
@@ -26,23 +32,16 @@ pub const CommandRunner = struct {
                 try install(package.?);
                 std.log.debug("Found command: {s} with value {s}", .{ cmd, package.? });
             },
+            .remove => {
+                try remove(package.?);
+                std.log.debug("Found command: {s} with value {s}", .{ cmd, package.? });
+            },
+            .link => {
+                try link(package.?);
+                std.log.debug("Found command: {s} with value {s}", .{ cmd, package.? });
+            },
             else => return CliError.UnsupportedCommand,
         }
-
-        //
-        // // TODO: Rework this into a switch to switch on the supported commands
-        // if (package == null) {
-        //     return CliError.MissingArgumentPackageName;
-        // } else if (StrEql(u8, cmd, "install")) {
-        //     try install(package.?);
-        //     std.log.debug("Found command: {s} with value {s}", .{ cmd, package.? });
-        // } else if (StrEql(u8, cmd, "remove")) {
-        //     try remove(package.?);
-        //     std.log.debug("Found command: {s} with value {s}", .{ cmd, package.? });
-        // } else if (StrEql(u8, cmd, "link")) {
-        //     try link(package.?);
-        //     std.log.debug("Found command: {s} with value {s}", .{ cmd, package.? });
-        // }
     }
 
     /// run singluar commands only like list
@@ -51,6 +50,8 @@ pub const CommandRunner = struct {
             try list();
         } else if (StrEql(u8, cmd, "help")) {
             try print_help();
+        } else if (StrEql(u8, cmd, "init")) {
+            try init_prj.scaffold("hehe.zig.zon");
         }
     }
 };

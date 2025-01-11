@@ -1,9 +1,8 @@
 //! This is the parser file for the .zon extension files.
-//! We need to still figure out how we can read the file(s)
-//! even if they are not in the project directory.
-//!
-//! This is because using json is fine, but parsing json into
-//! the zon format for a struct seems to be a pain in the ass.
+//! This is missing a few extra QOL features:
+//! 1. We can not yet parse a nested struct as its own property - however we can probably
+//! do this with some form of recursion.
+//! 2. we can not yet parse arrays/slices properly (strings being the exception).
 //! If we can import the file, as it is "comptime known"
 //! meaning we can also extract the properties from it.
 
@@ -17,14 +16,19 @@ const Parser = @This();
 const START_ZON = ".{{\n";
 const END_ZON = "}}\n";
 const DELIMITERS = "\n,{},=,\r, ,    ";
+const FILE_SUFFIX = ".zig.zon";
 
+/// the initial ZonParser struct that contains the 2 members of
+/// marshal_dynamic and parse_dynamic.
+///
+/// This struct will eventually also hold some meta data for the parser once implementation is
+/// satisfactory.
 pub const ZonParser = struct {
     /// Dynamically marshal a struct of type T to into a .zig.zon file format.
     /// file_name can be a maximum of 24 characters long
     pub fn marshal_dynamic(comptime T: type, input: T, file_name: []const u8) !void {
         var buf: [32]u8 = undefined;
-        const suffix = ".zig.zon";
-        const buf_slice = try std.fmt.bufPrint(&buf, "{s}{s}", .{ file_name, suffix });
+        const buf_slice = try std.fmt.bufPrint(&buf, "{s}{s}", .{ file_name, FILE_SUFFIX });
 
         const file = try std.fs.cwd().createFile(buf_slice, .{});
         defer file.close();
@@ -51,6 +55,7 @@ pub const ZonParser = struct {
     }
 
     /// Dyanimically read a .zig.zon file into a struct of type T.
+    /// Returns an error union of anyerror or the struct of type T.
     pub fn parse_dynamic(comptime T: type, content: []const u8) !T {
         var result: T = undefined;
 
@@ -65,15 +70,14 @@ pub const ZonParser = struct {
 
                 if (!std.mem.eql(u8, field.name, field_name)) continue;
 
-                // Skip any potential equals sign token
+                // skip if the token is an "=" symbol.
                 const maybe_equals = tokenizer.next() orelse return error.InvalidFormat;
 
                 if (!std.mem.eql(u8, maybe_equals, "=")) {
-                    // If it's not an equals sign, it's our value
-                    try parseAndAssignValue(field.type, &@field(result, field.name), maybe_equals);
+                    try assign_field_value(field.type, &@field(result, field.name), maybe_equals);
                 } else {
                     const value_token = tokenizer.next() orelse return error.InvalidFormat;
-                    try parseAndAssignValue(field.type, &@field(result, field.name), value_token);
+                    try assign_field_value(field.type, &@field(result, field.name), value_token);
                 }
                 break;
             }
@@ -83,7 +87,11 @@ pub const ZonParser = struct {
     }
 };
 
-fn parseAndAssignValue(comptime FieldType: type, ptr: *FieldType, value: []const u8) !void {
+/// Assign a field value to a provided field name from a struct. By passing the ptr and de-referencing
+/// the pointer to be able to mut its value with the provided value.
+/// all values must be provided as 'strings' but this will also assign and cast the value to the correct
+/// type based on the FieldType type that is passed on comptime
+fn assign_field_value(comptime FieldType: type, ptr: *FieldType, value: []const u8) !void {
     const type_info = @typeInfo(FieldType);
 
     switch (type_info) {
